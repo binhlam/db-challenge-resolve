@@ -31,5 +31,5 @@
 
 4. Result:
    ```sh
-   stored in (after run the curl above) /db-challenge-resolve/xml/result.xml
+   after run the curl above, result stored in: <your-path>/db-challenge-resolve/xml/result.xml
    ```
