@@ -1,0 +1,26 @@
+version: "3.0"
+
+services:
+  postgres:
+    container_name: generator_postgres
+    image: postgres:latest
+    volumes:
+      - ./postgres/:/docker-entrypoint-initdb.d/
+    environment: {
+      POSTGRES_DB: benerator,
+      POSTGRES_USER: benerator,
+      POSTGRES_PASSWORD: benerator
+    }
+    ports:
+      - "35432:5432"
+  api:
+    build: .
+    image: generator_api:latest
+    command: gunicorn --timeout 3000 -b 0.0.0.0:8001 "main:run()"
+    container_name: generator_api
+    ports:
+      - "8000:8001"
+    volumes:
+      - ./:/app/
+    links:
+      - postgres
