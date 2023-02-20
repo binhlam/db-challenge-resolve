@@ -31,5 +31,5 @@
 
 4. Result:
    ```sh
-   >>>> /db-challenge-resolve/xml/result.xml
+   stored in /db-challenge-resolve/xml/result.xml
    ```
