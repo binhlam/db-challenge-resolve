@@ -58,24 +58,24 @@ class GeneratorService(object):
         try:
             # fetch metadata
             fetched_data = self.fetch_metadata()
-            raws = {}
+            metadata = {}
             for item in fetched_data:
-                raws.update({
+                metadata.update({
                     item['table']: item.get('metadata', {}),
                 })
 
             # fetch constraints
-            fechted_contraints = self.fetch_constraints()
+            fetched_contraints = self.fetch_constraints()
             constraints = {}
-            for item in fechted_contraints:
+            for item in fetched_contraints:
                 constraints.update({
                     item['table']: item.get('ref_tables', []),
                 })
 
             # generate
-            ordered_tables = self.search(raws, constraints)
-            final_raws = self.build(raws, constraints, ordered_tables)
-            self.generate_xml(final_raws)
+            ordered_tables = self.search(metadata, constraints)
+            ordered_data = self.build(metadata, constraints, ordered_tables)
+            self.generate_xml(ordered_data)
 
         except Exception as e:
             _logger.error("ERROR generating xml file: %s" % str(e))
@@ -84,24 +84,24 @@ class GeneratorService(object):
         _logger.info("[GeneratorService] generate success!!")
         return True
 
-    def search(self, raws, constraints):
+    def search(self, metadata, constraints):
         uniq = set()
         res = []
-        for tbl_name, _ in raws.items():
+        for tbl_name, _ in metadata.items():
             dfs(tbl_name, constraints, uniq, res)
 
         return res
 
-    def build(self, raws, constraints, ordered_tables):
+    def build(self, metadata, constraints, ordered_tables):
         res = []
         for tbl_name in ordered_tables:
-            metadata = raws[tbl_name]
+            data = metadata[tbl_name]
             foreign_data = constraints.get(tbl_name, {})
             if not foreign_data:
-                res.append({tbl_name: metadata})
+                res.append({tbl_name: data})
                 continue
 
-            for col in metadata['columns']:
+            for col in data['columns']:
                 if not col['fkey']:
                     continue
 
@@ -115,7 +115,7 @@ class GeneratorService(object):
                     'ref_table': fcol['foreign_table_name'],
                 })
 
-            res.append({tbl_name: metadata})
+            res.append({tbl_name: data})
 
         return res
 
@@ -128,14 +128,14 @@ class GeneratorService(object):
 
         return None
 
-    def generate_xml(self, data):
-        save_dir_path = '{}/{}'.format(Path(__file__).parent.parent.parent, '/xml')
+    def generate_xml(self, ordered_data):
+        save_dir_path = '{}/{}'.format(Path(__file__).parent.parent.parent, '/track/xml')
         if not os.path.exists(save_dir_path):
             os.makedirs(save_dir_path)
 
         save_file_path = '{}/{}'.format(save_dir_path, 'result.xml')
         root = ET.Element('root')
-        for d in data:
+        for d in ordered_data:
             table_name = list(d.keys())[0]
             generate_node = ET.SubElement(root, 'generate')
             generate_node.set('type', table_name)

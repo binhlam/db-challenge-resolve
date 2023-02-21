@@ -20,5 +20,4 @@ media/
 /modules.xml
 /profiles_settings.xml
 /workspace.xml
-**/log/
-**/xml/
+**/track/
