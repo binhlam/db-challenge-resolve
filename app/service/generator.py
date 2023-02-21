@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-from app.repository.generator import GeneratorRepository
-from pkg.db.database import _pool
-from app.service.constants import TYPE, SPECIAL_NODES, SPECIAL_NODES_PATTERN
-import psycopg2, psycopg2.extras
-import logging, re
+import logging
+import os
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import psycopg2
+import psycopg2.extras
+
+from .utils import dfs
+from app.repository.generator import GeneratorRepository
+from app.service.constants import TYPE, SPECIAL_NODES, SPECIAL_NODES_PATTERN
+from pkg.db.database import _pool
 
 _logger = logging.getLogger('db-challenge')
 
@@ -83,50 +88,9 @@ class GeneratorService(object):
         uniq = set()
         res = []
         for tbl_name, _ in raws.items():
-            self.dfs(tbl_name, constraints, uniq, res)
+            dfs(tbl_name, constraints, uniq, res)
 
         return res
-
-    def dfs(self, tbl_name, constraints, uniq, res):
-        """
-        perform depth first search
-        :param tbl_name:
-        :param constraints:
-        :param uniq:
-        :param res:
-        :return:
-        """
-        if not tbl_name:
-            return
-
-        ref_tables = constraints.get(tbl_name, [])
-        if not ref_tables:
-            return
-
-        for tbl in ref_tables:
-            r_tbl_name = tbl.get('foreign_table_name', '')
-            if not r_tbl_name:
-                continue
-
-            if r_tbl_name in uniq:
-                continue
-
-            if r_tbl_name == tbl_name:
-                if r_tbl_name not in uniq:
-                    uniq.add(r_tbl_name)
-                    res.append(r_tbl_name)
-                    continue
-
-            self.dfs(r_tbl_name, constraints, uniq, res)
-            if r_tbl_name not in uniq:
-                uniq.add(r_tbl_name)
-                res.append(r_tbl_name)
-
-        if tbl_name not in uniq:
-            uniq.add(tbl_name)
-            res.append(tbl_name)
-
-        return
 
     def build(self, raws, constraints, ordered_tables):
         res = []
@@ -165,7 +129,11 @@ class GeneratorService(object):
         return None
 
     def generate_xml(self, data):
-        save_path_file = '{}/{}'.format(Path(__file__).parent.parent.parent, 'xml/result.xml')
+        save_dir_path = '{}/{}'.format(Path(__file__).parent.parent.parent, '/xml')
+        if not os.path.exists(save_dir_path):
+            os.makedirs(save_dir_path)
+
+        save_file_path = '{}/{}'.format(save_dir_path, 'result.xml')
         root = ET.Element('root')
         for d in data:
             table_name = list(d.keys())[0]
@@ -212,6 +180,6 @@ class GeneratorService(object):
         # write
         tree = ET.ElementTree(root)
         ET.indent(root, space="\t", level=0)
-        tree.write(save_path_file, encoding="utf-8")
+        tree.write(save_file_path, encoding="utf-8")
 
         return
