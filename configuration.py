@@ -8,7 +8,7 @@ config = {}
 log_format = "[%(asctime)s] [%(levelname)s] [%(module)s] %(message)s"
 formatter = logging.Formatter(log_format)
 base_path = os.path.dirname(__file__)
-fileHandler_path = os.path.abspath(os.path.join(base_path, "{}".format('pkg/log/db-challenge.log')))
+fileHandler_path = os.path.abspath(os.path.join(base_path, "{}".format('log/db-challenge.log')))
 os.makedirs(os.path.dirname(fileHandler_path), exist_ok=True)
 logging.basicConfig(level='INFO', format=log_format)
 
