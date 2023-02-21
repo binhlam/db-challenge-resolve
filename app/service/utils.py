@@ -23,10 +23,7 @@ def dfs(tbl_name, constraints, uniq, res):
             continue
 
         if r_tbl_name == tbl_name:
-            if r_tbl_name not in uniq:
-                uniq.add(r_tbl_name)
-                res.append(r_tbl_name)
-                continue
+            continue
 
         dfs(r_tbl_name, constraints, uniq, res)
         if r_tbl_name not in uniq:
