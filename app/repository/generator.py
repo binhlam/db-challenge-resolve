@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import logging
+import psycopg2
+import psycopg2.extras
 
-_logger = logging.getLogger('db-challenge')
 
-
-class GeneratorRepository(object):
-    def __init__(self, cr=None):
-        self.cr = cr
+class GeneratorRepository:
+    def __init__(self, pool=None, logger=None):
+        self.pool = pool
+        self.logger = logger
 
     def fetch_metadata(self):
         sql = """
@@ -45,12 +45,18 @@ class GeneratorRepository(object):
             where table_schema='public'
             group by col.table_name;
         """
-        data = None
         try:
-            self.cr.execute(sql)
-            data = self.cr.fetchall()
+            self.logger.info("[GeneratorRepository] fetch_metadata sql: %s" % sql)
+            with self.pool.getconn() as conn:
+                cr = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cr.execute(sql)
+                data = cr.fetchall()
         except Exception as e:
-            _logger.error("[GeneratorRepository] fetch error: %s" % str(e))
+            data = None
+            self.logger.error("[GeneratorRepository] fetch_metadata error: %s" % str(e))
+        finally:
+            conn.reset()
+            self.pool.putconn(conn)
 
         return data
 
@@ -75,11 +81,17 @@ class GeneratorRepository(object):
               AND tc.table_schema='public'
             GROUP BY tc.table_name
         """
-        data = None
         try:
-            self.cr.execute(sql)
-            data = self.cr.fetchall()
+            self.logger.info("[GeneratorRepository] fetch_constraints sql: %s" % sql)
+            with self.pool.getconn() as conn:
+                cr = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cr.execute(sql)
+                data = cr.fetchall()
         except Exception as e:
-            _logger.error("[GeneratorRepository] fetch constraints: %s" % str(e))
+            data = None
+            self.logger.error("[GeneratorRepository] fetch_constraints error: %s" % str(e))
+        finally:
+            conn.reset()
+            self.pool.putconn(conn)
 
         return data
